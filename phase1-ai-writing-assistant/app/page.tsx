@@ -4,17 +4,22 @@ import { useChat } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useRef, useEffect } from "react";
 import { DefaultChatTransport } from "ai";
 
 export default function Home() {
   const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat", // 我们稍后会创建这个后端接口
     }),
   });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -73,6 +78,18 @@ export default function Home() {
                 </div>
               </div>
             ))}
+
+            {/* 任务2: AI 正在思考时的加载提示 */}
+            {status === "submitted" && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-lg p-3 text-sm bg-white border dark:bg-zinc-900 dark:border-zinc-800 text-zinc-500 animate-pulse">
+                  AI正在思考中...
+                </div>
+              </div>
+            )}
+
+            {/* 任务3: 用来锚定滚动到底部的空元素 */}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* 2. 底部输入区 (固定在底部，有上边框分隔) */}
