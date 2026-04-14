@@ -1,16 +1,17 @@
 import { useChat } from "@ai-sdk/react";
 import { Button, Input } from "@base-ui/react";
-import { DefaultChatTransport } from "ai";
-import { useState, useRef, useMemo, useEffect, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent, useMemo } from "react";
 import { Card } from "./ui/card";
+import { DefaultChatTransport } from "ai";
 
 interface ChatSessionProps {
   role: string;
   tone: string;
   length: string;
+  modelType: string;
 }
 
-function ChatSession({ role, tone, length }: ChatSessionProps) {
+function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +43,7 @@ function ChatSession({ role, tone, length }: ChatSessionProps) {
       if (textPart && textPart.text) {
         sendMessage(
           { text: textPart.text },
-          { body: { role, tone, length } }, // 官方标准解法：在重新生成时动态附加最新的配置参数
+          { body: { role, tone, length, modelType } }, // 将模型选择一并传给后端
         );
       }
     }
@@ -55,10 +56,7 @@ function ChatSession({ role, tone, length }: ChatSessionProps) {
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (input.trim()) {
-      sendMessage(
-        { text: input },
-        { body: { role, tone, length } }, // 官方标准解法：在发送新消息时动态附加最新的配置参数
-      );
+      sendMessage({ text: input }, { body: { role, tone, length, modelType } });
       setInput("");
     }
   };
@@ -115,8 +113,6 @@ function ChatSession({ role, tone, length }: ChatSessionProps) {
                   发生错误：{error.message || "请求超时或网络异常"}
                 </p>
                 <Button
-                  variant="outline"
-                  size="sm"
                   onClick={handleReload}
                   className="bg-white dark:bg-zinc-950 hover:bg-zinc-100"
                 >

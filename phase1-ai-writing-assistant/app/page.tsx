@@ -7,13 +7,34 @@ import ChatSession from "@/components/ChatSession";
 export default function Home() {
   const [role, setRole] = useState("copywriter");
   const [tone, setTone] = useState("professional");
-  const [length, setLength] = useState("medium");
+  const [length, setLength] = useState("short");
+  const [modelType, setModelType] = useState("free");
 
   return (
     <main className="flex h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
       <aside className="w-80 mr-4 flex flex-col gap-4">
         <Card className="flex-1 p-4 flex flex-col">
           <h2 className="text-lg font-semibold mb-4">写作设置</h2>
+
+          {/* 模型接口控制项 */}
+          <div className="flex flex-col gap-2 mb-4">
+            <label
+              htmlFor="modelType"
+              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              模型接口
+            </label>
+            <select
+              id="modelType"
+              value={modelType}
+              onChange={(e) => setModelType(e.target.value)}
+              className="p-2 border rounded-md text-sm bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-zinc-500"
+            >
+              <option value="/api/free">免费开源模型</option>
+              <option value="/api/chat">ChatGPT 模型</option>
+            </select>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label
               htmlFor="role"
@@ -76,7 +97,12 @@ export default function Home() {
         </Card>
       </aside>
 
-      <ChatSession role={role} tone={tone} length={length} />
+      <ChatSession
+        role={role}
+        tone={tone}
+        length={length}
+        modelType={modelType}
+      />
     </main>
   );
 }
