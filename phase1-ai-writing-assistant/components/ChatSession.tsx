@@ -2,6 +2,8 @@ import { useChat } from "@ai-sdk/react";
 import { Button, Input } from "@base-ui/react";
 import { useState, useRef, useEffect, ChangeEvent, useMemo } from "react";
 import { Card } from "./ui/card";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { DefaultChatTransport } from "ai";
 
 interface ChatSessionProps {
@@ -20,7 +22,7 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
       new DefaultChatTransport({
         api: "/api/chat",
       }),
-    [],
+    [], // 空依赖数组确保 transport 实例只创建一次
   );
 
   const { messages, sendMessage, status, error } = useChat({
@@ -71,30 +73,39 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
               欢迎使用 AI 写作助手，今天想写点什么？
             </div>
           )}
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+          {messages.map((message) => {
+            // 核心修复：从 message.parts 中安全地提取并拼接文本内容
+            const content = message.parts
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("");
+
+            return (
               <div
-                className={`max-w-[80%] rounded-lg p-3 text-sm whitespace-pre-wrap break-words ${
-                  message.role === "user"
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-white border dark:bg-zinc-900 dark:border-zinc-800"
+                key={message.id}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                {/* 新版 API 推荐从 parts 渲染 */}
-                {message.role === "user" ? "我：\n" : "AI：\n"}
-                {message.parts?.map((part, index) =>
-                  part.type === "text" ? (
-                    <span key={index}>{part.text}</span>
-                  ) : null,
-                )}
+                <div
+                  className={`max-w-none rounded-lg p-3 text-sm ${
+                    message.role === "user"
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 whitespace-pre-wrap break-words"
+                      : "bg-white border dark:bg-zinc-900 dark:border-zinc-800 prose prose-sm dark:prose-invert"
+                  }`}
+                >
+                  {message.role === "user" ? "我：\n" : "AI：\n"}
+                  {message.role === "user" ? (
+                    content
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {content}
+                    </ReactMarkdown>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* 任务2: AI 正在思考时的加载提示 */}
           {status === "submitted" && (
@@ -128,7 +139,6 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
 
         {/* 2. 底部输入区 (固定在底部，有上边框分隔) */}
         <div className="p-4 border-t bg-white dark:bg-zinc-900">
-          {/* 这里等会儿放输入框和发送按钮 */}
           <form className="flex gap-2" onSubmit={(e) => handleSubmit(e)}>
             <Input
               className="flex-1"

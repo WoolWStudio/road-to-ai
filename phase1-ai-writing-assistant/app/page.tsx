@@ -8,7 +8,7 @@ export default function Home() {
   const [role, setRole] = useState("copywriter");
   const [tone, setTone] = useState("professional");
   const [length, setLength] = useState("short");
-  const [modelType, setModelType] = useState("free");
+  const [modelType, setModelType] = useState("/api/free"); // 修复：初始值应与 option value 匹配
 
   return (
     <main className="flex h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
