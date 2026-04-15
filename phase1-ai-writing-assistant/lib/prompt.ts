@@ -2,6 +2,7 @@ export function buildSystemPrompt(
   role?: string,
   tone?: string,
   length?: string,
+  isQuickAction?: boolean,
 ): string {
   let systemPrompt = "你是一个专业的 AI 写作助手。";
 
@@ -29,13 +30,16 @@ export function buildSystemPrompt(
   }
 
   // 组装长度 (Length)
-  if (length === "short") {
-    systemPrompt += " 请保持回答简明扼要，总字数控制在 100 字以内。";
-  } else if (length === "long") {
-    systemPrompt +=
-      " 请尽可能详尽地展开描述，提供丰富的细节，总字数不少于 800 字。";
-  } else {
-    systemPrompt += " 回答篇幅保持适中即可（约 300 - 500 字）。";
+  // 仅在非快捷操作时，才添加篇幅长度的限制
+  if (!isQuickAction) {
+    if (length === "short") {
+      systemPrompt += " 请保持回答简明扼要，总字数控制在 100 字以内。";
+    } else if (length === "long") {
+      systemPrompt +=
+        " 请尽可能详尽地展开描述，提供丰富的细节，总字数不少于 800 字。";
+    } else {
+      systemPrompt += " 回答篇幅保持适中即可（约 300 - 500 字）。";
+    }
   }
 
   return systemPrompt;

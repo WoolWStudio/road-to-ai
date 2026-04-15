@@ -4,6 +4,8 @@ import { useState, useRef, useEffect, ChangeEvent, useMemo } from "react";
 import { Card } from "./ui/card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { DefaultChatTransport } from "ai";
 
 interface ChatSessionProps {
@@ -16,6 +18,19 @@ interface ChatSessionProps {
 function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 定义快捷操作按钮及其对应的 Prompt 模板
+  const quickActions = [
+    { label: "扩写", promptTemplate: "请对以下内容进行扩写：\n\n{text}" },
+    {
+      label: "缩写",
+      promptTemplate: "请对以下内容进行缩写，使其更精简：\n\n{text}",
+    },
+    {
+      label: "润色",
+      promptTemplate: "请对以下内容进行润色，使其更具文采：\n\n{text}",
+    },
+  ];
 
   const transport = useMemo(
     () =>
@@ -49,6 +64,15 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
         );
       }
     }
+  };
+
+  // 处理快捷操作点击事件
+  const handleQuickAction = (aiContent: string, promptTemplate: string) => {
+    const newPrompt = promptTemplate.replace("{text}", aiContent);
+    sendMessage(
+      { text: newPrompt }, // 构造一个新的“隐藏”用户消息。新版 SDK 使用 `text` 属性
+      { body: { role, tone, length, modelType, isQuickAction: true } }, // 附带当前设置，并标记为快捷操作
+    );
   };
 
   useEffect(() => {
@@ -98,9 +122,51 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
                   {message.role === "user" ? (
                     content
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {content}
-                    </ReactMarkdown>
+                    <>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // 提取出 ref，防止它被传递给 SyntaxHighlighter 导致类型不匹配
+                          code({ node, className, children, ref, ...props }) {
+                            const match = /language-(\w+)/.exec(
+                              className || "",
+                            );
+                            const isInline = !match;
+                            return !isInline ? (
+                              <SyntaxHighlighter
+                                style={vscDarkPlus as any}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, "")}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} ref={ref} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                        }}
+                      >
+                        {content}
+                      </ReactMarkdown>
+                      {/* 快捷操作按钮区域 */}
+                      <div className="flex gap-2 mt-2">
+                        {quickActions.map((action) => (
+                          <Button
+                            key={action.label}
+                            className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                            onClick={() =>
+                              handleQuickAction(content, action.promptTemplate)
+                            }
+                            disabled={status !== "ready"} // 在 AI 思考时禁用按钮
+                          >
+                            {action.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

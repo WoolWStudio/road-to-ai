@@ -14,11 +14,12 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   // 1. 解析前端传来的 JSON，额外提取 modelType
-  const { messages, role, tone, length, modelType } = await req.json();
-  console.log({ messages, role, tone, length, modelType });
+  const { messages, role, tone, length, modelType, isQuickAction } =
+    await req.json();
+  console.log({ messages, role, tone, length, modelType, isQuickAction });
 
   // 1.5 动态组装 System Prompt (系统提示词)
-  const systemPrompt = buildSystemPrompt(role, tone, length);
+  const systemPrompt = buildSystemPrompt(role, tone, length, isQuickAction);
 
   let result;
 
