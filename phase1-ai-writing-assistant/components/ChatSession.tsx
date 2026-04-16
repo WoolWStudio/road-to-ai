@@ -2,12 +2,8 @@ import { useChat } from "@ai-sdk/react";
 import { Button, Input } from "@base-ui/react";
 import { useState, useRef, useEffect, ChangeEvent, useMemo } from "react";
 import { Card } from "./ui/card";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { DefaultChatTransport } from "ai";
-
+import { MessageBubble } from "./MessageBubble";
 interface ChatSessionProps {
   role: string;
   tone: string;
@@ -19,19 +15,6 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // 定义快捷操作按钮及其对应的 Prompt 模板
-  const quickActions = [
-    { label: "扩写", promptTemplate: "请对以下内容进行扩写：\n\n{text}" },
-    {
-      label: "缩写",
-      promptTemplate: "请对以下内容进行缩写，使其更精简：\n\n{text}",
-    },
-    {
-      label: "润色",
-      promptTemplate: "请对以下内容进行润色，使其更具文采：\n\n{text}",
-    },
-  ];
 
   const transport = useMemo(
     () =>
@@ -137,98 +120,18 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
             </div>
           )}
           {messages.map((message, index) => {
-            // 核心修复：从 message.parts 中安全地提取并拼接文本内容
-            const content = message.parts
-              .filter((part) => part.type === "text")
-              .map((part) => part.text)
-              .join("");
-
             const isLastMessage = index === messages.length - 1;
-
             return (
-              <div
+              <MessageBubble
                 key={message.id}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-none rounded-lg p-3 text-sm ${
-                    message.role === "user"
-                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 whitespace-pre-wrap break-words"
-                      : "bg-white border dark:bg-zinc-900 dark:border-zinc-800 prose prose-sm dark:prose-invert"
-                  }`}
-                >
-                  {message.role === "user" ? "我：\n" : "AI：\n"}
-                  {message.role === "user" ? (
-                    content
-                  ) : (
-                    <>
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          // 提取出 ref，防止它被传递给 SyntaxHighlighter 导致类型不匹配
-                          code({ node, className, children, ref, ...props }) {
-                            const match = /language-(\w+)/.exec(
-                              className || "",
-                            );
-                            const isInline = !match;
-                            return !isInline ? (
-                              <SyntaxHighlighter
-                                style={vscDarkPlus as any}
-                                language={match[1]}
-                                PreTag="div"
-                                {...props}
-                              >
-                                {String(children).replace(/\n$/, "")}
-                              </SyntaxHighlighter>
-                            ) : (
-                              <code className={className} ref={ref} {...props}>
-                                {children}
-                              </code>
-                            );
-                          },
-                        }}
-                      >
-                        {content}
-                      </ReactMarkdown>
-                      {/* 快捷操作按钮区域 */}
-                      <div className="flex gap-2 mt-2">
-                        {quickActions.map((action) => (
-                          <Button
-                            key={action.label}
-                            className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-                            onClick={() =>
-                              handleQuickAction(content, action.promptTemplate)
-                            }
-                            disabled={status !== "ready"} // 在 AI 思考时禁用按钮
-                          >
-                            {action.label}
-                          </Button>
-                        ))}
-                        {/* 第三周 Day 1: 一键复制与重新生成 */}
-                        <Button
-                          className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-                          onClick={() => handleCopy(message.id, content)}
-                          disabled={status !== "ready"}
-                        >
-                          {copiedId === message.id ? "已复制 ✓" : "复制"}
-                        </Button>
-                        {/* 重新生成按钮：仅在最新的一条 AI 回复上显示 */}
-                        {isLastMessage && (
-                          <Button
-                            className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-                            onClick={handleReload}
-                            disabled={status !== "ready"}
-                          >
-                            重新生成
-                          </Button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                message={message}
+                isLastMessage={isLastMessage}
+                status={status}
+                copiedId={copiedId}
+                handleQuickAction={handleQuickAction}
+                handleCopy={handleCopy}
+                handleReload={handleReload}
+              />
             );
           })}
 
@@ -274,7 +177,7 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
               清空对话框
             </Button>
             <Input
-              className="flex-1"
+              className="flex-1 px-2"
               placeholder="输入文字"
               value={input}
               onChange={(e) => setInput(e.target.value)}
