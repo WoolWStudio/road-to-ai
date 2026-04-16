@@ -18,6 +18,7 @@ interface ChatSessionProps {
 function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // 定义快捷操作按钮及其对应的 Prompt 模板
   const quickActions = [
@@ -40,13 +41,37 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
     [], // 空依赖数组确保 transport 实例只创建一次
   );
 
-  const { messages, sendMessage, status, error } = useChat({
+  // 新增提取 setMessages 方法，用于将本地缓存恢复到视图
+  const { messages, setMessages, sendMessage, status, error, stop } = useChat({
     transport,
     onError: (err) => {
       console.error("Chat API Error:", err);
       // 这里未来可以接全局的 Toast 提示组件，如 toast.error(err.message)
     },
   });
+
+  const isMounted = useRef(false);
+
+  // 1. 初始化：组件挂载时，从 localStorage 读取历史记录
+  useEffect(() => {
+    isMounted.current = true;
+    const savedMessages = localStorage.getItem("ai-chat-history");
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (e) {
+        console.error("解析本地历史记录失败", e);
+      }
+    }
+  }, [setMessages]);
+
+  // 2. 更新：当 messages 发生变化时，自动同步到 localStorage
+  useEffect(() => {
+    // 确保只在组件挂载后执行，防止初始化的空数组覆盖掉 localStorage 中的历史数据
+    if (isMounted.current) {
+      localStorage.setItem("ai-chat-history", JSON.stringify(messages));
+    }
+  }, [messages]);
 
   // 提取最新 API 适用的重新发送逻辑
   const handleReload = () => {
@@ -75,6 +100,13 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
     );
   };
 
+  // 处理复制功能，并提供 2 秒的“已复制”状态反馈
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -84,6 +116,13 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
     if (input.trim()) {
       sendMessage({ text: input }, { body: { role, tone, length, modelType } });
       setInput("");
+    }
+  };
+
+  // 处理清空对话
+  const handleClear = () => {
+    if (window.confirm("确定要清空当前的对话记录吗？")) {
+      setMessages([]); // 清空状态，触发 useEffect 自动清空 localStorage
     }
   };
 
@@ -97,12 +136,14 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
               欢迎使用 AI 写作助手，今天想写点什么？
             </div>
           )}
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             // 核心修复：从 message.parts 中安全地提取并拼接文本内容
             const content = message.parts
               .filter((part) => part.type === "text")
               .map((part) => part.text)
               .join("");
+
+            const isLastMessage = index === messages.length - 1;
 
             return (
               <div
@@ -165,6 +206,24 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
                             {action.label}
                           </Button>
                         ))}
+                        {/* 第三周 Day 1: 一键复制与重新生成 */}
+                        <Button
+                          className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                          onClick={() => handleCopy(message.id, content)}
+                          disabled={status !== "ready"}
+                        >
+                          {copiedId === message.id ? "已复制 ✓" : "复制"}
+                        </Button>
+                        {/* 重新生成按钮：仅在最新的一条 AI 回复上显示 */}
+                        {isLastMessage && (
+                          <Button
+                            className="px-3 py-1 text-xs border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                            onClick={handleReload}
+                            disabled={status !== "ready"}
+                          >
+                            重新生成
+                          </Button>
+                        )}
                       </div>
                     </>
                   )}
@@ -206,6 +265,14 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
         {/* 2. 底部输入区 (固定在底部，有上边框分隔) */}
         <div className="p-4 border-t bg-white dark:bg-zinc-900">
           <form className="flex gap-2" onSubmit={(e) => handleSubmit(e)}>
+            <Button
+              className="rounded-lg px-3 py-1 cursor-pointer bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 transition-colors"
+              type="button"
+              onClick={handleClear}
+              disabled={messages.length === 0 || status !== "ready"} // 没消息或AI正在生成时禁用
+            >
+              清空对话框
+            </Button>
             <Input
               className="flex-1"
               placeholder="输入文字"
@@ -213,13 +280,24 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
               onChange={(e) => setInput(e.target.value)}
               disabled={status !== "ready"}
             />
-            <Button
-              className="cursor-pointer"
-              type="submit"
-              disabled={status !== "ready"}
-            >
-              发送
-            </Button>
+            {/* 动态切换：就绪时显示“发送”，请求时显示“停止” */}
+            {status === "ready" || status === "error" ? (
+              <Button
+                className="rounded-lg px-2 py-1 cursor-pointer bg-zinc-200 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                type="submit"
+                disabled={!input.trim()} // 输入框为空时禁用发送
+              >
+                发送
+              </Button>
+            ) : (
+              <Button
+                className="rounded-lg px-2 py-1 cursor-pointer bg-zinc-200 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                type="button"
+                onClick={() => stop()} // 调用 useChat 提供的 stop 方法
+              >
+                停止生成
+              </Button>
+            )}
           </form>
         </div>
       </Card>
