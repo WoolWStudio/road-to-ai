@@ -5,13 +5,22 @@ import { Card } from "./ui/card";
 import { DefaultChatTransport } from "ai";
 import { MessageBubble } from "./MessageBubble";
 interface ChatSessionProps {
+  sessionId: string;
   role: string;
   tone: string;
   length: string;
   modelType: string;
+  onTitleGeneration: (sessionId: string, firstUserMessage: string) => void;
 }
 
-function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
+function ChatSession({
+  sessionId,
+  role,
+  tone,
+  length,
+  modelType,
+  onTitleGeneration,
+}: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -26,6 +35,7 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
 
   // 新增提取 setMessages 方法，用于将本地缓存恢复到视图
   const { messages, setMessages, sendMessage, status, error, stop } = useChat({
+    id: sessionId, // 关键：将 useChat 与特定会话 ID 绑定
     transport,
     onError: (err) => {
       console.error("Chat API Error:", err);
@@ -33,12 +43,11 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
     },
   });
 
-  const isMounted = useRef(false);
+  const isInitialMount = useRef(true);
 
-  // 1. 初始化：组件挂载时，从 localStorage 读取历史记录
+  // 1. 初始化：组件挂载时，从 localStorage 读取并恢复历史记录
   useEffect(() => {
-    isMounted.current = true;
-    const savedMessages = localStorage.getItem("ai-chat-history");
+    const savedMessages = localStorage.getItem(`chat_${sessionId}`);
     if (savedMessages) {
       try {
         setMessages(JSON.parse(savedMessages));
@@ -46,15 +55,22 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
         console.error("解析本地历史记录失败", e);
       }
     }
-  }, [setMessages]);
+  }, [sessionId, setMessages]);
 
-  // 2. 更新：当 messages 发生变化时，自动同步到 localStorage
+  // 2. 持久化：当 messages 变化时，保存到 localStorage，但跳过首次渲染
   useEffect(() => {
-    // 确保只在组件挂载后执行，防止初始化的空数组覆盖掉 localStorage 中的历史数据
-    if (isMounted.current) {
-      localStorage.setItem("ai-chat-history", JSON.stringify(messages));
+    if (isInitialMount.current) {
+      // 跳过首次渲染，防止用初始空数组覆盖已有历史记录
+      isInitialMount.current = false;
+      return;
     }
-  }, [messages]);
+    if (messages.length > 0) {
+      localStorage.setItem(`chat_${sessionId}`, JSON.stringify(messages));
+    } else {
+      // 如果 messages 为空（例如用户点击了清空），则从 localStorage 中移除记录
+      localStorage.removeItem(`chat_${sessionId}`);
+    }
+  }, [messages, sessionId]);
 
   // 提取最新 API 适用的重新发送逻辑
   const handleReload = () => {
@@ -96,8 +112,16 @@ function ChatSession({ role, tone, length, modelType }: ChatSessionProps) {
 
   const handleSubmit = (e: ChangeEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (input.trim()) {
-      sendMessage({ text: input }, { body: { role, tone, length, modelType } });
+    const trimmedInput = input.trim();
+    if (trimmedInput) {
+      // 如果这是会话的第一条消息，则触发标题生成
+      if (messages.length === 0) {
+        onTitleGeneration(sessionId, trimmedInput);
+      }
+      sendMessage(
+        { text: trimmedInput },
+        { body: { role, tone, length, modelType } },
+      );
       setInput("");
     }
   };

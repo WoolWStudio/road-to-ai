@@ -1,6 +1,6 @@
 export const MODEL_OPTIONS = [
-  { value: "/api/free", label: "免费开源模型" },
-  { value: "/api/chat", label: "ChatGPT 模型" },
+  { value: "/api/free", label: "免费开源模型（gpt-oss-20b）" },
+  { value: "/api/chat", label: "ChatGPT-5-nano 模型" },
 ];
 
 export const ROLE_OPTIONS = [
