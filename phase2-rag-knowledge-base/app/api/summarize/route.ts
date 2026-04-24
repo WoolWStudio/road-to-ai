@@ -10,7 +10,7 @@ const openrouter = createOpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { message, modelType } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "Message is required" }), {
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const { text } = await generateText({
-      model: openrouter.chat("openai/gpt-oss-20b:free"),
+      model: openrouter.chat(modelType),
       system:
         "You are an expert in summarizing conversations. Based on the user's first message, create a short, concise, and descriptive title for the chat session. The title should be no more than 5-8 words and in the same language as the user's message. Do not add any quotes around the title.",
       prompt: message,

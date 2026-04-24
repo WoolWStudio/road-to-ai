@@ -6,6 +6,8 @@ import ChatSession from "@/components/ChatSession";
 import { getInitialSetting } from "@/utils/setting";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { SessionList } from "@/components/SessionList";
+import { DocumentUpload } from "@/components/DocumentUpload";
+import { MODEL_OPTIONS } from "@/lib/constants";
 
 interface Session {
   id: string;
@@ -13,10 +15,7 @@ interface Session {
 }
 
 export default function Home() {
-  const [role, setRole] = useState("copywriter");
-  const [tone, setTone] = useState("professional");
-  const [length, setLength] = useState("short");
-  const [modelType, setModelType] = useState("/api/free");
+  const [modelType, setModelType] = useState(MODEL_OPTIONS[0].value);
   const [isMounted, setIsMounted] = useState(false);
 
   // 会话管理状态
@@ -26,10 +25,7 @@ export default function Home() {
   // 1. 解决 SSR 水合问题：在客户端挂载后，从 localStorage 读取并设置状态
   useEffect(() => {
     // 读取设置
-    setRole(getInitialSetting("role", "copywriter"));
-    setTone(getInitialSetting("tone", "professional"));
-    setLength(getInitialSetting("length", "short"));
-    setModelType(getInitialSetting("modelType", "/api/free"));
+    setModelType(getInitialSetting("modelType", MODEL_OPTIONS[0].value));
 
     // 读取会话列表
     const savedSessions = localStorage.getItem("ai-sessions");
@@ -59,7 +55,7 @@ export default function Home() {
   // 仅在组件挂载后 (isMounted) 执行，防止初始化的默认值覆盖 localStorage
   useEffect(() => {
     if (isMounted) {
-      const settings = { role, tone, length, modelType };
+      const settings = { modelType };
       localStorage.setItem("ai-chat-settings", JSON.stringify(settings));
 
       // 保存会话列表
@@ -68,7 +64,7 @@ export default function Home() {
         localStorage.setItem("ai-active-session-id", activeSessionId);
       }
     }
-  }, [role, tone, length, modelType, sessions, activeSessionId, isMounted]);
+  }, [modelType, sessions, activeSessionId, isMounted]);
 
   const handleNewChat = () => {
     const newId = uuidv4();
@@ -100,7 +96,7 @@ export default function Home() {
         const response = await fetch("/api/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: firstUserMessage }),
+          body: JSON.stringify({ message: firstUserMessage, modelType }),
         });
         if (!response.ok) throw new Error("Failed to fetch summary");
         const { title } = await response.json();
@@ -116,9 +112,9 @@ export default function Home() {
   };
 
   return (
-    <main className="flex h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
+    <main className="flex flex-col md:flex-row h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
       <aside
-        className={`w-80 mr-4 flex flex-col gap-4 transition-opacity duration-300 ${
+        className={`w-full md:w-80 mb-4 md:mb-0 md:mr-4 flex flex-col gap-4 transition-opacity duration-300 ${
           isMounted ? "opacity-100" : "opacity-0"
         }`}
       >
@@ -131,24 +127,19 @@ export default function Home() {
         />
         <SettingsPanel
           {...{
-            role,
-            setRole,
-            tone,
-            setTone,
-            length,
-            setLength,
             modelType,
             setModelType,
             isMounted,
           }}
         />
+        <DocumentUpload></DocumentUpload>
       </aside>
       {activeSessionId && (
         <ChatSession
           key={activeSessionId}
           sessionId={activeSessionId}
           onTitleGeneration={handleTitleGeneration}
-          {...{ role, tone, length, modelType }}
+          {...{ modelType }}
         />
       )}
     </main>

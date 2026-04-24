@@ -6,18 +6,12 @@ import { DefaultChatTransport } from "ai";
 import { MessageBubble } from "./MessageBubble";
 interface ChatSessionProps {
   sessionId: string;
-  role: string;
-  tone: string;
-  length: string;
   modelType: string;
   onTitleGeneration: (sessionId: string, firstUserMessage: string) => void;
 }
 
 function ChatSession({
   sessionId,
-  role,
-  tone,
-  length,
   modelType,
   onTitleGeneration,
 }: ChatSessionProps) {
@@ -84,7 +78,7 @@ function ChatSession({
       if (textPart && textPart.text) {
         sendMessage(
           { text: textPart.text },
-          { body: { role, tone, length, modelType } }, // 将模型选择一并传给后端
+          { body: { modelType } }, // 将模型选择一并传给后端
         );
       }
     }
@@ -95,7 +89,7 @@ function ChatSession({
     const newPrompt = promptTemplate.replace("{text}", aiContent);
     sendMessage(
       { text: newPrompt }, // 构造一个新的“隐藏”用户消息。新版 SDK 使用 `text` 属性
-      { body: { role, tone, length, modelType, isQuickAction: true } }, // 附带当前设置，并标记为快捷操作
+      { body: { modelType, isQuickAction: true } }, // 附带当前设置，并标记为快捷操作
     );
   };
 
@@ -118,10 +112,7 @@ function ChatSession({
       if (messages.length === 0) {
         onTitleGeneration(sessionId, trimmedInput);
       }
-      sendMessage(
-        { text: trimmedInput },
-        { body: { role, tone, length, modelType } },
-      );
+      sendMessage({ text: trimmedInput }, { body: { modelType } });
       setInput("");
     }
   };

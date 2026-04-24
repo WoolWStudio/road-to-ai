@@ -1,20 +1,11 @@
 import { Card } from "@/components/ui/card";
 import {
   MODEL_OPTIONS,
-  ROLE_OPTIONS,
-  TONE_OPTIONS,
-  LENGTH_OPTIONS,
 } from "@/lib/constants";
 
 interface SettingsPanelProps {
   modelType: string;
   setModelType: (value: string) => void;
-  role: string;
-  setRole: (value: string) => void;
-  tone: string;
-  setTone: (value: string) => void;
-  length: string;
-  setLength: (value: string) => void;
   isMounted: boolean;
 }
 
@@ -56,22 +47,16 @@ const SelectControl = ({
 export function SettingsPanel({
   modelType,
   setModelType,
-  role,
-  setRole,
-  tone,
-  setTone,
-  length,
-  setLength,
   isMounted,
 }: SettingsPanelProps) {
   return (
     <aside
-      className={`w-80 mr-4 flex flex-col gap-4 transition-opacity duration-300 ${
+      className={`flex flex-col gap-4 transition-opacity duration-300 ${
         isMounted ? "opacity-100" : "opacity-0"
       }`}
     >
       <Card className="flex-1 p-4 flex flex-col">
-        <h2 className="text-lg font-semibold mb-4">写作设置</h2>
+        <h2 className="text-lg font-semibold mb-4">设置</h2>
 
         <SelectControl
           id="modelType"
@@ -79,30 +64,6 @@ export function SettingsPanel({
           value={modelType}
           onChange={(e) => setModelType(e.target.value)}
           options={MODEL_OPTIONS}
-        />
-
-        <SelectControl
-          id="role"
-          label="助手角色"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          options={ROLE_OPTIONS}
-        />
-
-        <SelectControl
-          id="tone"
-          label="回复语气"
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
-          options={TONE_OPTIONS}
-        />
-
-        <SelectControl
-          id="length"
-          label="篇幅长度"
-          value={length}
-          onChange={(e) => setLength(e.target.value)}
-          options={LENGTH_OPTIONS}
         />
       </Card>
     </aside>

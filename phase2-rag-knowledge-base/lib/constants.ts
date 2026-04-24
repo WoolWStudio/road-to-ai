@@ -1,5 +1,17 @@
 export const MODEL_OPTIONS = [
-  { value: "/api/free", label: "免费开源模型（gpt-oss-20b）" },
+  { value: "openai/gpt-oss-20b:free", label: "免费模型（openai/gpt-oss-20b）" },
+  {
+    value: "tencent/hy3-preview:free",
+    label: "免费模型（tencent/hy3-preview:free）",
+  },
+  {
+    value: "google/gemma-4-26b-a4b-it:free",
+    label: "免费模型（google/gemma-4-26b-a4b-it:free）",
+  },
+  {
+    value: "nvidia/nemotron-3-super-120b-a12b:free",
+    label: "免费模型（nvidia/nemotron-3-super-120b-a12b:free）",
+  },
   { value: "/api/chat", label: "ChatGPT-5-nano 模型" },
 ];
 

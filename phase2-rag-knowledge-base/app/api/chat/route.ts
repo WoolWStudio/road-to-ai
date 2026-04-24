@@ -14,17 +14,17 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   // 1. 解析前端传来的 JSON，额外提取 modelType
-  const { messages, role, tone, length, modelType, isQuickAction } =
-    await req.json();
+  const { messages, modelType, isQuickAction } = await req.json();
 
   // 1.5 动态组装 System Prompt (系统提示词)
-  const systemPrompt = buildSystemPrompt(role, tone, length, isQuickAction);
+  const systemPrompt = buildSystemPrompt(isQuickAction);
 
   let result;
 
   // 2. 核心路由分发：根据 modelType 调用不同的模型和清洗策略
-  if (modelType === "/api/free") {
-    // --- 免费开源模型 (OpenRouter) 分支 ---
+  if (modelType !== "/api/chat") {
+    // --- 免费模型 (OpenRouter) 分支 ---
+    const model = openrouter.chat(modelType);
     const normalizedMessages = messages.map((msg: any) => {
       let text = "";
       if (Array.isArray(msg.parts)) {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     }
 
     result = streamText({
-      model: openrouter.chat("openai/gpt-oss-20b:free"),
+      model,
       messages: normalizedMessages,
     });
   } else {
