@@ -1,12 +1,12 @@
 # 第二阶段：支持文档解析的知识库系统 (第 4-7 周)
 
-在本阶段，我们将从零开始，构建一个功能完备的 RAG (Retrieval-Augmented Generation) 应用。用户可以上传自己的文档（如 PDF），然后像聊天一样向文档提问。这个项目将让你掌握大模型处理私有数据的核心技术，是 AI 应用工程师的必备技能。
+在本阶段，我们将从零开始，构建一个功能完备的 RAG (Retrieval-Augmented Generation) 应用。用户可以上传自己的纯文本文档（如 TXT），然后像聊天一样向文档提问。这个项目将让你掌握大模型处理私有数据的核心技术，是 AI 应用工程师的必备技能。
 
 ## 🎯 核心聚焦点
 
 - **向量数据库 (Vector Database)**：理解 Embeddings 的概念，并使用 Vercel Postgres (pgvector) 或其他向量数据库进行数据存储与检索。
 - **RAG 工作流 (RAG Workflow)**：掌握“解析-分块-向量化-存储-检索-生成”的完整 RAG 链路。
-- **文件处理**: 实现前端上传、后端解析 PDF/TXT 文档，并进行文本分块 (Chunking)。
+- **文件处理**: 实现前端上传、后端解析 TXT 文档，并进行文本分块 (Chunking)。
 - **Tool Use / Function Calling**: 学习使用 Vercel AI SDK 的 `generateObject`，让 AI 智能决定何时以及如何查询知识库。
 
 ---
@@ -25,11 +25,11 @@
   - 使用 `react-dropzone` 或原生 `<input type="file">` 实现文件上传的 UI。
 - **Day 2: 后端文档解析与分块 (Chunking)**
   - 创建一个新的 API Route (e.g., `app/api/documents/route.ts`) 用于接收上传的文档。
-  - 安装 `pdf-parse` 库，在后端实现从 PDF 文件中提取纯文本内容。**注意**：此库无法处理扫描版（图片）PDF，如果遇到解析瓶颈，可考虑直接使用 LLM 原生的文档理解能力或接入 OCR 服务。
+  - 在后端实现从 TXT 文件中提取纯文本内容，清洗多余的空行和特殊字符。
   - 实现一个简单的文本分块函数，将长文本切分成带有重叠部分 (overlap) 的小块 (chunks)。
 - **Day 3: Embeddings 与向量数据库**
   - 选择向量数据库：使用 **Vercel Postgres**。它与 Vercel 平台无缝集成，能最大程度节约环境配置时间。在 Vercel Dashboard 中一键创建并启用 `pgvector` 扩展。
-  - 在后端 API 中，使用 `@ai-sdk/openai` 的 `embed` 函数创建向量。**免费额度提示**：为了不超出 Vercel Postgres 的存储/写入限制以及 OpenAI API 的扣费，开发跑通链路期间，请**严格使用小文件（如几段话的 txt 或单页 PDF）**进行测试。
+  - 在后端 API 中，使用 `@ai-sdk/openai` 的 `embed` 函数创建向量。**免费额度提示**：为了不超出 Vercel Postgres 的存储/写入限制以及 OpenAI API 的扣费，开发跑通链路期间，请**严格使用小文件（如几段话的 TXT）**进行测试。
   - 学习如何将文本块内容及其对应的向量存入你的向量数据库。
 - **Day 4: 实现向量检索 (Retrieval)**
   - 在聊天 API (`app/api/chat/route.ts`) 中，接收用户问题。
@@ -87,7 +87,7 @@
   - 处理文档上传失败、解析失败等异常情况，并给与用户友好的提示。
   - 思考并优化分块策略 (Chunking Strategy)：不同的块大小和重叠，对检索效果有什么影响？
 - **Day 6-7: 缓冲日**
-  - 对整个应用进行压力测试，上传一些较大的 PDF，观察处理速度和检索质量。
+  - 对整个应用进行压力测试，上传一些较大的 TXT，观察处理速度和检索质量。
 
 ### 第七周 (Week 7)：评估、部署与复盘
 

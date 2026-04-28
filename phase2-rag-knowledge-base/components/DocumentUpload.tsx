@@ -6,19 +6,40 @@ import { UploadCloud, FileText, X } from "lucide-react";
 
 export function DocumentUpload() {
   const [files, setFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     // 将新上传的文件追加到列表中
     setFiles((prev) => [...prev, ...acceptedFiles]);
 
-    // TODO: Day 2 - 在这里添加调用后端 API 的逻辑，将文件发送给服务器进行解析和分块
-    console.log("Accepted files:", acceptedFiles);
+    if (acceptedFiles.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append("file", file);
+      });
+
+      const response = await fetch("/api/documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log("后端解析和分块结果:", data);
+      alert("文件解析并分块成功！请打开浏览器控制台查看结果。");
+    } catch (error) {
+      console.error("上传失败:", error);
+      alert("上传解析失败，请重试。");
+    } finally {
+      setIsUploading(false);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/pdf": [".pdf"],
       "text/plain": [".txt"],
     },
     maxSize: 5 * 1024 * 1024, // 限制 5MB，避免初期测试导致 OOM 或超出免费额度
@@ -41,14 +62,14 @@ export function DocumentUpload() {
       >
         <input {...getInputProps()} />
         <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
-        {isDragActive ? (
+        {isUploading ? (
+          <p className="text-sm text-blue-500">正在解析文件...</p>
+        ) : isDragActive ? (
           <p className="text-sm text-blue-500">松开鼠标上传文件</p>
         ) : (
           <div className="text-center">
             <p className="text-sm text-gray-600">点击或拖拽文件到此处</p>
-            <p className="text-xs text-gray-400 mt-1">
-              支持 PDF, TXT (最大 5MB)
-            </p>
+            <p className="text-xs text-gray-400 mt-1">支持 TXT (最大 5MB)</p>
           </div>
         )}
       </div>
