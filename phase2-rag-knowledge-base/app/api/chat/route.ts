@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
+import { streamText, convertToModelMessages, embed } from "ai";
+import { sql } from "@vercel/postgres";
 import { buildSystemPrompt } from "@/lib/prompt";
 
 // 统一配置 OpenRouter
@@ -17,7 +18,56 @@ export async function POST(req: Request) {
   const { messages, modelType, isQuickAction } = await req.json();
 
   // 1.5 动态组装 System Prompt (系统提示词)
-  const systemPrompt = buildSystemPrompt(isQuickAction);
+  let systemPrompt = buildSystemPrompt(isQuickAction);
+
+  // --- Day 4: 向量检索 (Retrieval) 开始 ---
+  try {
+    // a. 获取用户最新的一条问题
+    const lastMessage = messages[messages.length - 1];
+
+    let userQuery = "";
+    if (Array.isArray(lastMessage.parts)) {
+      userQuery = lastMessage.parts.map((p: any) => p.text || "").join("");
+    } else if (typeof lastMessage.content === "string") {
+      userQuery = lastMessage.content;
+    } else if (Array.isArray(lastMessage.content)) {
+      userQuery = lastMessage.content.map((p: any) => p.text || "").join("");
+    }
+
+    if (userQuery && !isQuickAction) {
+      console.log("正在向量化用户问题:", userQuery);
+      // b. 将用户问题转换为向量
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: userQuery,
+      });
+
+      const embeddingString = `[${embedding.join(",")}]`;
+
+      // c. 在数据库中进行相似度搜索 (Cosine Distance)
+      // <=> 是 pgvector 提供的余弦距离操作符，越小表示越相似
+      // LIMIT 3 表示我们只取最相关的 3 个文本块
+      const { rows } = await sql`
+        SELECT chunk_content
+        FROM document_chunks
+        ORDER BY embedding <=> ${embeddingString}
+        LIMIT 3
+      `;
+
+      // d. 将检索到的内容拼接到 System Prompt 中
+      if (rows.length > 0) {
+        const retrievedContext = rows
+          .map((row) => row.chunk_content)
+          .join("\n\n---\n\n");
+        systemPrompt += `\n\n【知识库上下文】\n请务必根据以下检索到的知识库内容来回答用户的问题。如果上下文中没有相关信息，请明确告知用户你不知道，不要自己编造。\n\n${retrievedContext}`;
+        console.log("检索成功，已将上下文注入提示词。");
+      }
+    }
+  } catch (error) {
+    console.error("向量检索失败:", error);
+    // 检索失败不阻断普通聊天，只做日志记录
+  }
+  // --- Day 4: 向量检索 (Retrieval) 结束 ---
 
   let result;
 
