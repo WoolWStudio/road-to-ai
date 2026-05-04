@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Button } from "@base-ui/react";
 import { QUICK_ACTIONS } from "@/lib/constants";
+import { ToolInvocations } from "./ToolInvocations";
 
 interface MessageBubbleProps {
   message: UIMessage;
@@ -30,6 +31,9 @@ export function MessageBubble({
     .map((part) => part.text)
     .join("");
 
+  // 提取出所有工具调用相关的 parts
+  const toolParts = message.parts.filter((part) => "toolCallId" in part);
+
   return (
     <div
       className={`flex ${
@@ -48,6 +52,8 @@ export function MessageBubble({
           content
         ) : (
           <>
+            {/* 渲染 Tool Invocations 状态 (Vercel AI SDK 5+) */}
+            <ToolInvocations toolParts={toolParts} />
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
