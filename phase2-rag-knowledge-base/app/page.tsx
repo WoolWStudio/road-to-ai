@@ -132,7 +132,7 @@ export default function Home() {
             isMounted,
           }}
         />
-        <DocumentUpload></DocumentUpload>
+        <DocumentUpload />
       </aside>
       {activeSessionId && (
         <ChatSession

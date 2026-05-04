@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         const retrievedContext = rows
           .map((row) => row.chunk_content)
           .join("\n\n---\n\n");
-        systemPrompt += `\n\n【知识库上下文】\n请务必根据以下检索到的知识库内容来回答用户的问题。如果上下文中没有相关信息，请明确告知用户你不知道，不要自己编造。\n\n${retrievedContext}`;
+        systemPrompt += `\n\n【知识库上下文】\n请优先根据以下检索到的知识库内容来回答用户的问题。如果上下文中没有相关信息，你可以结合你自身的知识进行回答，但请友好地提醒用户该回答并非来自知识库。\n\n${retrievedContext}`;
         console.log("检索成功，已将上下文注入提示词。");
       }
     }
