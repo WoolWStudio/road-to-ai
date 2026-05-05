@@ -9,6 +9,11 @@ interface ToolInvocationsProps {
   )[];
 }
 
+type PartOutput = {
+  found: boolean;
+  sources: { filename: string; content: string }[];
+};
+
 export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
   if (!toolParts || toolParts.length === 0) return null;
 
@@ -29,6 +34,7 @@ export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
         let statusIcon = "🔄";
         let statusText = `正在调用 ${toolName}...`;
         let styleClass = "text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50";
+        let citations = null;
 
         if (isDone) {
           statusIcon = "✅";
@@ -38,6 +44,26 @@ export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
               : `${toolName} 调用完成`;
           styleClass =
             "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400";
+
+          const toolResult = part.output as PartOutput;
+
+          // 解析引用来源 (Citations)
+          if (toolName === "searchKnowledgeBase" && toolResult) {
+            if (toolResult.found && Array.isArray(toolResult.sources)) {
+              // 提取并去重 fileName
+              const fileNames = Array.from(
+                new Set(toolResult.sources.map((s: any) => s.fileName)),
+              ) as string[];
+              citations = fileNames.map((name, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center ml-2 px-2 py-0.5 rounded text-xs bg-emerald-100 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300"
+                >
+                  📄 {name}
+                </span>
+              ));
+            }
+          }
         } else if (isError) {
           statusIcon = "❌";
           statusText =
@@ -59,6 +85,11 @@ export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
               {statusIcon}
             </span>
             <span>{statusText}</span>
+            {citations && (
+              <div className="ml-2 border-l border-emerald-200 dark:border-emerald-700 pl-2 flex gap-1">
+                {citations}
+              </div>
+            )}
           </div>
         );
       })}

@@ -25,12 +25,18 @@ export async function POST(req: Request) {
     await req.json(),
   );
 
-  const systemPrompt = buildSystemPrompt(
+  let systemPrompt = buildSystemPrompt(
     undefined,
     undefined,
     undefined,
     isQuickAction,
   );
+
+  // 追加 RAG 引用标注指令 (Prompt Engineering)
+  if (!isQuickAction) {
+    systemPrompt +=
+      "\n\n【重要指令】如果你调用工具检索了知识库，请务必在生成的回答中，使用 Markdown 脚注语法在相关句子的末尾标注来源（例如：这会导致利润下降[^1]）。并在全部回答的最后，列出对应的来源文件名（例如：[^1]: bp.txt）。不要编造来源，严格使用工具返回的 fileName。";
+  }
 
   // tools 仅在非 Quick Action 时注入，避免不必要的 tool call
   const tools = isQuickAction ? undefined : { searchKnowledgeBase };
