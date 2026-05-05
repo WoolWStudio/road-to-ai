@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { embedMany } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { sql } from "@vercel/postgres";
+import { documentUploadSchema } from "@/lib/schema";
+import { z } from "zod";
 
 // 简单的文本分块函数 (滑动窗口切片)
 // chunkSize: 每个文本块的最大长度
@@ -20,11 +22,11 @@ export async function POST(req: Request) {
   try {
     // 解析前端传来的 FormData
     const formData = await req.formData();
-    const files = formData.getAll("file") as File[];
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: "没有接收到文件" }, { status: 400 });
-    }
+    // 将提取出的数据交给 Zod 强校验
+    const { files } = documentUploadSchema.parse({
+      files: formData.getAll("file"),
+    });
 
     const results = [];
 
@@ -74,6 +76,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, results });
   } catch (error: any) {
     console.error("处理文档时发生错误:", error);
+
+    // 优雅拦截 Zod 校验错误
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

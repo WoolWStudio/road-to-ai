@@ -1,9 +1,15 @@
-// app/api/chat/route.ts  ← 精简后的路由
 import { openai } from "@ai-sdk/openai";
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  stepCountIs,
+  UIMessage,
+  ModelMessage,
+} from "ai";
 import { buildSystemPrompt } from "@/lib/prompt";
 import { searchKnowledgeBase } from "@/lib/tools"; // ← 引入 tool
+import { chatRequestSchema } from "@/lib/schema";
 
 const openrouter = createOpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -13,9 +19,18 @@ const openrouter = createOpenAI({
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, modelType, isQuickAction } = await req.json();
+  // parse() 会在运行时强校验数据。
+  // 如果前端传了非法的 JSON，这里会直接抛出清晰的 ZodError 被 SDK 捕获，绝不会让脏数据搞崩你的核心业务逻辑。
+  const { messages, modelType, isQuickAction } = chatRequestSchema.parse(
+    await req.json(),
+  );
 
-  const systemPrompt = buildSystemPrompt(isQuickAction);
+  const systemPrompt = buildSystemPrompt(
+    undefined,
+    undefined,
+    undefined,
+    isQuickAction,
+  );
 
   // tools 仅在非 Quick Action 时注入，避免不必要的 tool call
   const tools = isQuickAction ? undefined : { searchKnowledgeBase };
@@ -24,14 +39,10 @@ export async function POST(req: Request) {
 
   if (modelType !== "/api/chat") {
     // OpenRouter 分支：手动拼接 system prompt（部分模型不支持 system 字段）
-    const normalizedMessages = messages.map((msg: any) => {
+    const normalizedMessages: ModelMessage[] = messages.map((msg) => {
       let text = "";
-      if (Array.isArray(msg.parts)) {
-        text = msg.parts.map((p: any) => p.text || "").join("");
-      } else if (typeof msg.content === "string") {
-        text = msg.content;
-      } else if (Array.isArray(msg.content)) {
-        text = msg.content.map((p: any) => p.text || "").join("");
+      if ("parts" in msg && Array.isArray(msg.parts)) {
+        text = msg.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
       }
       return {
         role: msg.role === "assistant" ? "assistant" : "user",

@@ -1,5 +1,12 @@
+import { DynamicToolUIPart, UITool, UIToolInvocation } from "ai";
+
 interface ToolInvocationsProps {
-  toolParts: any[];
+  toolParts: (
+    | DynamicToolUIPart
+    | ({
+        type: `tool-${string}`;
+      } & UIToolInvocation<UITool>)
+  )[];
 }
 
 export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
