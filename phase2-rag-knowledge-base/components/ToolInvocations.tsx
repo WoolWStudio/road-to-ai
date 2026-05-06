@@ -11,7 +11,7 @@ interface ToolInvocationsProps {
 
 type PartOutput = {
   found: boolean;
-  sources: { filename: string; content: string }[];
+  sources: { fileName: string; content: string }[];
 };
 
 export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
@@ -52,7 +52,7 @@ export function ToolInvocations({ toolParts }: ToolInvocationsProps) {
             if (toolResult.found && Array.isArray(toolResult.sources)) {
               // 提取并去重 fileName
               const fileNames = Array.from(
-                new Set(toolResult.sources.map((s: any) => s.fileName)),
+                new Set(toolResult.sources.map((s) => s.fileName)),
               ) as string[];
               citations = fileNames.map((name, idx) => (
                 <span
