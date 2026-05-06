@@ -6,8 +6,8 @@ import ChatSession from "@/components/ChatSession";
 import { getInitialSetting } from "@/utils/setting";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { SessionList } from "@/components/SessionList";
-import { DocumentUpload } from "@/components/DocumentUpload";
 import { MODEL_OPTIONS } from "@/lib/constants";
+import { DocumentManager } from "@/components/DocumentManager";
 
 interface Session {
   id: string;
@@ -132,7 +132,7 @@ export default function Home() {
             isMounted,
           }}
         />
-        <DocumentUpload />
+        <DocumentManager />
       </aside>
       {activeSessionId && (
         <ChatSession
