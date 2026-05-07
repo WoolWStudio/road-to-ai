@@ -20,7 +20,6 @@ export default function Home() {
 
   // 文档范围管理状态
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string>("all");
 
   // 1. 解决 SSR 水合问题：在客户端挂载后，从 localStorage 读取并设置状态
   useEffect(() => {
@@ -43,7 +42,11 @@ export default function Home() {
     } else {
       // 如果没有历史会话，则创建一个新的
       const newId = uuidv4();
-      const newSession = { id: newId, name: "新对话" };
+      const newSession: Session = {
+        id: newId,
+        name: "新对话",
+        documentId: "all",
+      };
       setSessions([newSession]);
       setActiveSessionId(newId);
     }
@@ -86,7 +89,11 @@ export default function Home() {
 
   const handleNewChat = () => {
     const newId = uuidv4();
-    const newSession = { id: newId, name: "新对话" };
+    const newSession: Session = {
+      id: newId,
+      name: "新对话",
+      documentId: "all",
+    };
     setSessions((prev) => [...prev, newSession]);
     setActiveSessionId(newId);
   };
@@ -129,6 +136,20 @@ export default function Home() {
     }
   };
 
+  // 动态计算：获取当前活动会话的选中记录，默认为 "all"
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const selectedDocumentId = activeSession?.documentId || "all";
+
+  // 当用户在下拉菜单中切换文档时，只更新当前会话的绑定范围
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newDocId = e.target.value;
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId ? { ...s, documentId: newDocId } : s,
+      ),
+    );
+  };
+
   return (
     <main className="flex flex-col md:flex-row h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
       <aside
@@ -159,7 +180,7 @@ export default function Home() {
           </label>
           <select
             value={selectedDocumentId}
-            onChange={(e) => setSelectedDocumentId(e.target.value)}
+            onChange={handleDocumentChange}
             className="p-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           >
             <option value="all">📚 全局搜索 (所有文档)</option>

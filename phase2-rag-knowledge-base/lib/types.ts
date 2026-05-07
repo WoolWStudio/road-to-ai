@@ -1,6 +1,7 @@
 export type Session = {
   id: string;
   name: string;
+  documentId?: string; // 记录该会话专属的检索范围
 };
 
 export type Document = {
