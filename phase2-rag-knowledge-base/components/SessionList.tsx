@@ -1,9 +1,5 @@
 import { Button } from "@base-ui/react";
-
-interface Session {
-  id: string;
-  name: string;
-}
+import type { Session } from "@/lib/types";
 
 interface SessionListProps {
   sessions: Session[];

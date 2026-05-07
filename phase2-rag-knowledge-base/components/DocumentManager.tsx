@@ -3,13 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@base-ui/react";
 import { useDropzone } from "react-dropzone";
-
-interface Document {
-  id: string;
-  file_name: string;
-  status: string;
-  created_at: string;
-}
+import type { Document } from "@/lib/types";
 
 export function DocumentManager() {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,6 +49,8 @@ export function DocumentManager() {
         });
         if (res.ok) {
           await fetchDocuments(); // 上传成功后刷新列表
+          // 触发全局事件，通知外部组件（如侧边栏的文档选择器）更新列表
+          window.dispatchEvent(new Event("documentsUpdated"));
         } else {
           const error = await res.json();
           alert(error.error || "上传失败");
@@ -85,6 +81,8 @@ export function DocumentManager() {
       });
       if (res.ok) {
         await fetchDocuments(); // 删除成功后刷新列表
+        // 触发全局事件，通知外部组件更新列表
+        window.dispatchEvent(new Event("documentsUpdated"));
       } else {
         const error = await res.json();
         alert(error.error || "删除失败");

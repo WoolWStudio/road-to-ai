@@ -8,11 +8,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { SessionList } from "@/components/SessionList";
 import { MODEL_OPTIONS } from "@/lib/constants";
 import { DocumentManager } from "@/components/DocumentManager";
-
-interface Session {
-  id: string;
-  name: string;
-}
+import type { Session, Document } from "@/lib/types";
 
 export default function Home() {
   const [modelType, setModelType] = useState(MODEL_OPTIONS[0].value);
@@ -21,6 +17,10 @@ export default function Home() {
   // 会话管理状态
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  // 文档范围管理状态
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>("all");
 
   // 1. 解决 SSR 水合问题：在客户端挂载后，从 localStorage 读取并设置状态
   useEffect(() => {
@@ -50,6 +50,24 @@ export default function Home() {
 
     setIsMounted(true); // 标记为已挂载，此后才允许保存
   }, []); // 空依赖数组确保只在挂载时执行一次
+
+  // 动态获取文档列表，并监听自定义事件以便在 DocumentManager 上传/删除时自动刷新
+  const fetchDocuments = async () => {
+    try {
+      const res = await fetch("/api/documents");
+      const data = await res.json();
+      if (data.success) {
+        setDocuments(data.documents);
+      }
+    } catch (error) {
+      console.error("Failed to fetch documents:", error);
+    }
+  };
+  useEffect(() => {
+    fetchDocuments();
+    window.addEventListener("documentsUpdated", fetchDocuments);
+    return () => window.removeEventListener("documentsUpdated", fetchDocuments);
+  }, []);
 
   // 2. 状态持久化：当设置项变化时，将其存入 localStorage
   // 仅在组件挂载后 (isMounted) 执行，防止初始化的默认值覆盖 localStorage
@@ -133,6 +151,25 @@ export default function Home() {
           }}
         />
         <DocumentManager />
+
+        {/* 检索范围选择器 */}
+        <div className="flex flex-col gap-2 bg-white dark:bg-zinc-900 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm mt-auto">
+          <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            🎯 检索范围限制
+          </label>
+          <select
+            value={selectedDocumentId}
+            onChange={(e) => setSelectedDocumentId(e.target.value)}
+            className="p-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          >
+            <option value="all">📚 全局搜索 (所有文档)</option>
+            {documents.map((doc) => (
+              <option key={doc.id} value={doc.id}>
+                📄 {doc.file_name}
+              </option>
+            ))}
+          </select>
+        </div>
       </aside>
       {activeSessionId && (
         <ChatSession
@@ -140,6 +177,9 @@ export default function Home() {
           sessionId={activeSessionId}
           onTitleGeneration={handleTitleGeneration}
           {...{ modelType }}
+          documentId={
+            selectedDocumentId === "all" ? undefined : selectedDocumentId
+          }
         />
       )}
     </main>

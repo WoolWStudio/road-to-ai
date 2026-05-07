@@ -9,6 +9,7 @@ export const chatRequestSchema = z.object({
   ),
   modelType: z.string(),
   isQuickAction: z.boolean().default(false),
+  documentId: z.string().optional(), // 允许前端传入 documentId
 });
 
 // 魔法：利用 Zod 自动推导出静态类型，供其他地方复用

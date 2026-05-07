@@ -8,7 +8,7 @@ import {
   ModelMessage,
 } from "ai";
 import { buildSystemPrompt } from "@/lib/prompt";
-import { searchKnowledgeBase } from "@/lib/tools"; // ← 引入 tool
+import { buildTools } from "@/lib/tools"; // 引入我们新建的高阶函数
 import { chatRequestSchema } from "@/lib/schema";
 
 const openrouter = createOpenAI({
@@ -21,9 +21,8 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   // parse() 会在运行时强校验数据。
   // 如果前端传了非法的 JSON，这里会直接抛出清晰的 ZodError 被 SDK 捕获，绝不会让脏数据搞崩你的核心业务逻辑。
-  const { messages, modelType, isQuickAction } = chatRequestSchema.parse(
-    await req.json(),
-  );
+  const { messages, modelType, isQuickAction, documentId } =
+    chatRequestSchema.parse(await req.json());
 
   let systemPrompt = buildSystemPrompt(
     undefined,
@@ -39,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   // tools 仅在非 Quick Action 时注入，避免不必要的 tool call
-  const tools = isQuickAction ? undefined : { searchKnowledgeBase };
+  const tools = isQuickAction ? undefined : buildTools(documentId);
 
   let result;
 

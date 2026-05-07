@@ -8,12 +8,14 @@ interface ChatSessionProps {
   sessionId: string;
   modelType: string;
   onTitleGeneration: (sessionId: string, firstUserMessage: string) => void;
+  documentId?: string;
 }
 
 function ChatSession({
   sessionId,
   modelType,
   onTitleGeneration,
+  documentId, // 接收上层传来的范围 ID
 }: ChatSessionProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -78,7 +80,7 @@ function ChatSession({
       if (textPart && textPart.text) {
         sendMessage(
           { text: textPart.text },
-          { body: { modelType } }, // 将模型选择一并传给后端
+          { body: { modelType, documentId } }, // 将模型和文档范围限制一并传给后端
         );
       }
     }
@@ -89,7 +91,7 @@ function ChatSession({
     const newPrompt = promptTemplate.replace("{text}", aiContent);
     sendMessage(
       { text: newPrompt }, // 构造一个新的“隐藏”用户消息。新版 SDK 使用 `text` 属性
-      { body: { modelType, isQuickAction: true } }, // 附带当前设置，并标记为快捷操作
+      { body: { modelType, isQuickAction: true, documentId } }, // 附带当前设置，并标记为快捷操作
     );
   };
 
@@ -112,7 +114,7 @@ function ChatSession({
       if (messages.length === 0) {
         onTitleGeneration(sessionId, trimmedInput);
       }
-      sendMessage({ text: trimmedInput }, { body: { modelType } });
+      sendMessage({ text: trimmedInput }, { body: { modelType, documentId } });
       setInput("");
     }
   };
