@@ -1,0 +1,70 @@
+[
+  {
+    "question": "What is the company's primary product?",
+    "ideal_answer": "The company's primary product is an AI-powered writing assistant platform designed to help users create high-quality content efficiently.",
+    "contexts": [
+      "Project 'Phoenix' is our flagship product, an advanced AI-powered writing assistant. It integrates seamlessly into existing workflows, offering features like tone adjustment, content summarization, and real-time suggestions to enhance writing quality and speed."
+    ]
+  },
+  {
+    "question": "Who is the target audience for the product?",
+    "ideal_answer": "The target audience includes content creators, marketers, students, and business professionals who need to produce written content regularly.",
+    "contexts": [
+      "Our primary target market consists of professionals and creators who rely on written communication. This includes content marketers, copywriters, academic students, and business executives preparing reports and presentations."
+    ]
+  },
+  {
+    "question": "What is the projected revenue for the first year?",
+    "ideal_answer": "The projected revenue for the first year is $1.5 million, based on a subscription model.",
+    "contexts": [
+      "Financial Projections: We forecast a first-year revenue of $1.5 million. This is based on a tiered subscription model with an estimated 10,000 paying users by the end of Q4."
+    ]
+  },
+  {
+    "question": "What are the key features of the AI assistant?",
+    "ideal_answer": "Key features include tone adjustment, content summarization, real-time grammar and style suggestions, and plagiarism detection.",
+    "contexts": [
+      "The platform boasts several key features: 1) Dynamic Tone Adjustment, allowing users to switch between formal, casual, and other styles. 2) One-click Content Summarization. 3) Advanced real-time grammar and style checking. 4) Integrated plagiarism detection to ensure originality."
+    ]
+  },
+  {
+    "question": "How does the company plan to acquire customers?",
+    "ideal_answer": "The customer acquisition strategy focuses on content marketing, partnerships with educational institutions, and a freemium model to drive organic adoption.",
+    "contexts": [
+      "Our go-to-market strategy is multi-pronged. We will heavily invest in content marketing (blogs, webinars) to establish thought leadership. Strategic partnerships with universities will introduce our product to students. A freemium offering will serve as a primary driver for user acquisition, with upsell opportunities to premium features."
+    ]
+  },
+  {
+    "question": "Who are the main competitors?",
+    "ideal_answer": "The main competitors are established players like Grammarly and emerging AI writing tools such as Jasper.",
+    "contexts": [
+      "Competitive Landscape: The market includes established incumbents like Grammarly, which has a large user base. Additionally, newer AI-native tools like Jasper and Copy.ai are direct competitors in the generative content space."
+    ]
+  },
+  {
+    "question": "What is the pricing model?",
+    "ideal_answer": "The pricing model is a tiered subscription, including a free basic plan, a Pro plan at $15/month, and a custom Enterprise plan.",
+    "contexts": [
+      "Our pricing is structured in three tiers: a 'Free' plan with basic features, a 'Pro' plan for individuals at $15 per month, and a customizable 'Enterprise' plan for teams with advanced security and collaboration needs."
+    ]
+  },
+  {
+    "question": "What technology stack is the product built on?",
+    "ideal_answer": "The product is built on a modern web stack using Next.js for the frontend and a Python-based backend with FastAPI for serving the AI models.",
+    "contexts": [
+      "The 'Phoenix' platform is architected using a modern tech stack. The frontend is a Next.js application, providing a fast and responsive user experience. The backend services, including the core AI model inference, are powered by a Python and FastAPI microservices architecture."
+    ]
+  },
+  {
+    "question": "What is the core technological advantage?",
+    "ideal_answer": "The core technological advantage is a proprietary fine-tuned language model that offers superior contextual understanding and generation quality compared to off-the-shelf models.",
+    "contexts": [
+      "Our key differentiator lies in our proprietary language model. We have fine-tuned a base model on a curated dataset of high-quality writing, resulting in a significant improvement in contextual understanding and stylistic nuance over generic, off-the-shelf APIs."
+    ]
+  },
+  {
+    "question": "Does the document mention anything about a mobile app?",
+    "ideal_answer": "The document does not mention a mobile app; the focus is on the web-based platform.",
+    "contexts": []
+  }
+]

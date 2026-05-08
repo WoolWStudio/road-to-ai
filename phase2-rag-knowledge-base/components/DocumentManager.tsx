@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@base-ui/react";
 import { useDropzone } from "react-dropzone";
 import type { Document } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export function DocumentManager() {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,12 +52,14 @@ export function DocumentManager() {
           await fetchDocuments(); // 上传成功后刷新列表
           // 触发全局事件，通知外部组件（如侧边栏的文档选择器）更新列表
           window.dispatchEvent(new Event("documentsUpdated"));
+          toast.success("文档上传并向量化成功！");
         } else {
           const error = await res.json();
-          alert(error.error || "上传失败");
+          toast.error(error.error || "上传失败");
         }
       } catch (error) {
         console.error("Upload error:", error);
+        toast.error("网络错误，上传失败");
       } finally {
         setIsUploading(false);
       }
@@ -83,12 +86,14 @@ export function DocumentManager() {
         await fetchDocuments(); // 删除成功后刷新列表
         // 触发全局事件，通知外部组件更新列表
         window.dispatchEvent(new Event("documentsUpdated"));
+        toast.success("文档删除成功！");
       } else {
         const error = await res.json();
-        alert(error.error || "删除失败");
+        toast.error(error.error || "删除失败");
       }
     } catch (error) {
       console.error("Delete error:", error);
+      toast.error("网络错误，删除失败");
     }
   };
 

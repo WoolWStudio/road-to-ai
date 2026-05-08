@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, ChangeEvent, useMemo } from "react";
 import { Card } from "./ui/card";
 import { DefaultChatTransport } from "ai";
 import { MessageBubble } from "./MessageBubble";
+import toast from "react-hot-toast";
 interface ChatSessionProps {
   sessionId: string;
   modelType: string;
@@ -35,7 +36,7 @@ function ChatSession({
     transport,
     onError: (err) => {
       console.error("Chat API Error:", err);
-      // 这里未来可以接全局的 Toast 提示组件，如 toast.error(err.message)
+      toast.error(err.message || "请求对话失败");
     },
   });
 

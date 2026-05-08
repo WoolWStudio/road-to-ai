@@ -9,6 +9,7 @@ import { SessionList } from "@/components/SessionList";
 import { MODEL_OPTIONS } from "@/lib/constants";
 import { DocumentManager } from "@/components/DocumentManager";
 import type { Session, Document } from "@/lib/types";
+import { Toaster } from "react-hot-toast";
 
 export default function Home() {
   const [modelType, setModelType] = useState(MODEL_OPTIONS[0].value);
@@ -152,6 +153,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col md:flex-row h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <aside
         className={`w-full md:w-80 mb-4 md:mb-0 md:mr-4 flex flex-col gap-4 transition-opacity duration-300 ${
           isMounted ? "opacity-100" : "opacity-0"

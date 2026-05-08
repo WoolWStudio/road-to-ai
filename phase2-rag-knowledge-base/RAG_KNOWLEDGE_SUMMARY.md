@@ -104,7 +104,7 @@ for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
 export const buildTools = (documentId?: string) => ({
   searchKnowledgeBase: tool({
     description: "当用户的问题可能需要参考知识库文档时，调用此工具进行检索。",
-    parameters: z.object({ query: z.string() }),
+    inputSchema: z.object({ query: z.string() }),
     execute: async ({ query }) => {
       // ...获取 query 的 embedding...
 
@@ -219,14 +219,46 @@ systemPrompt += `
 
 ### 8.1 引入 RAGAS 评估指标
 
-不能只看最终生成的回答，需要将 RAG 拆解为“检索”和“生成”两部分进行自动化评估。
-**核心量化指标**：
+不能只凭感觉（Vibes）看最终生成的回答，需要将 RAG 拆解为“检索 (Retrieval)”和“生成 (Generation)”两部分进行独立评估。业界常使用 RAGAS 或 TruLens 等评估框架。
 
-- **上下文精确度 (Context Precision)**：检索出来的 Chunk 中，真正对回答问题有用的比例（惩罚无关信息）。
-- **上下文召回率 (Context Recall)**：回答这个标准问题所需的知识，是否都被检索系统找全了。
-- **忠实度 (Faithfulness)**：大模型的最终回答是否严格基于检索到的 Context（检测幻觉）。
+**三大核心量化指标**：
+
+1. **Context Precision (上下文精确度) - 评估检索器**
+   - **核心问题**：数据库找出来的文本块准不准？有用的信息是不是排在最前面？
+   - **概念**：衡量召回的 Chunk 中，真正包含答案的 Chunk 是否排在最前。大模型有“迷失在中间”的通病，如果前几个 Chunk 都是无关噪音，AI 极易被误导。
+
+2. **Faithfulness (忠实度 / 无幻觉率) - 评估生成器**
+   - **核心问题**：大模型的回答是不是 100% 严格基于检索出的上下文？
+   - **概念**：专门用于检测幻觉 (Hallucination)。将最终答案拆解为多句陈述，检查是否每一句都能从检索到的 Chunk 中推导出来。在企业知识库中，宁愿 AI 回答“未找到相关信息”，也绝对不能瞎编。
+
+3. **Answer Relevancy (答案相关性) - 评估端到端系统**
+   - **核心问题**：最终的回答是不是直接、精准地解答了用户的提问？
+   - **概念**：衡量“答”与“问”的匹配度。即使检索很准 (High Precision)、回答也很忠实 (High Faithfulness)，但如果长篇大论答非所问，用户体验依然很差。
+
+**💡 工业界自动化测试 (LLM-as-a-Judge)**：
+面对成百上千道测试题，人工打分是不现实的。目前的最佳实践是使用一个参数量更大、更聪明的模型（如 GPT-4o 或 Claude 3.5 Sonnet）作为“裁判 (Judge)”，通过特定的 Prompt 自动化运行测试集并为上述指标打分。
 
 ---
+
+### 8.2 创建基准测试集 (Golden Set)
+
+为了进行量化评估，必须首先创建一个“黄金标准”测试集。这个测试集通常是一个 JSON 文件，包含一系列的问答对。
+**最佳实践**：测试集应覆盖多种问题类型，包括事实查找、归纳总结、以及**文档中不存在答案**的“负面测试”（用于检测幻觉）。
+
+```json
+// evals/basic-eval-set.json
+[
+  {
+    "question": "What is the company's primary product?",
+    "ideal_answer": "The company's primary product is an AI-powered writing assistant platform...",
+    "contexts": [
+      "Project 'Phoenix' is our flagship product, an advanced AI-powered writing assistant..."
+    ]
+  }
+]
+```
+
+这个文件是所有 RAG 优化的基石。每当你调整分块策略、Prompt 或 Reranking 模型时，都应该用这个测试集跑一遍，用数据来证明你的改动是正向的。
 
 ## 9. 生产环境的成本与安全兜底 (Cost & Security)
 
